@@ -1,7 +1,7 @@
 #include <ILI9341_t3.h>
 #include <utility>
 #include <I_no_can_speak_flex.h>
-
+#include <cmath>
 //basically just defining the pins that are used on the teensy
 #define CS_PIN  8
 #define TIRQ_PIN  2
@@ -62,13 +62,19 @@ void setup() {
   CAN.begin();
 }
 
+//used to get the number of digits that need to be displayed 
+unsigned GetNumberOfDigits (unsigned i)
+{
+    return i > 0 ? (int) log10 ((double) i) + 1 : 1;
+}
 /*
 An example function to update the specific guage with params: i, x
 param i: number to update to
 param x: lcoation of the guage stored in an std::pair
 */
-void printSingleDig(int i, std::pair<int, int> x){
-  tft.fillRect(x.first,x.second, 6 * sizeoftext, 8 * sizeoftext , 0x0000);
+void printDig(int i, std::pair<int, int> x){
+  unsigned n_digits = GetNumberOfDigits(i);
+  tft.fillRect(x.first,x.second, n_digits * 6 * sizeoftext, 8 * sizeoftext , 0x0000);
   tft.setCursor(x.first,x.second);
   tft.setTextSize(sizeoftext);
   tft.println(i);
@@ -80,6 +86,8 @@ void printDoubleDig(int i, std::pair<int, int> x){
   tft.setTextSize(sizeoftext);
   tft.println(i);
 }
+
+
 int time = 0;
 void loop() {
   CAN.readData();
