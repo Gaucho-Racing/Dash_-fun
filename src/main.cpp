@@ -40,6 +40,7 @@ static std::pair<int, int> g5(120 , 30);
 
 int curr_color = 0X0000;
 int curr_display = 0;
+int last_n_digitds = 0;
 
 boolean debug_Display_hasRun = false;
 boolean main_Display_hasRun = false;
@@ -88,6 +89,13 @@ void printDig(int i, std::pair<int, int> x, int t_size, int color){
 
 void printSpeedDig(int i, std::pair<int, int> x, int t_size, int color){
   int n_digits = GetNumberOfDigits(i);
+  if(last_n_digitds < n_digits){
+    last_n_digitds = n_digits;
+  }
+  if(last_n_digitds > n_digits){
+    tft.fillRect(0,0,320,144,ILI9341_BLACK);
+    last_n_digitds = n_digits;
+  }
   int z = 170 - ((n_digits) * 6 * t_size)/2;
   tft.setCursor(z,x.second);
   tft.setTextSize(t_size);
@@ -95,6 +103,7 @@ void printSpeedDig(int i, std::pair<int, int> x, int t_size, int color){
 }
 
 void main_Display_Setup(){
+  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
   tft.fillScreen(ILI9341_BLACK);
   tft.setCursor(5,200);
   tft.setTextSize(2);
@@ -108,14 +117,8 @@ void main_Display(){
   CAN.readData();
   replace all the i stuff with the can vars/funcs needed.
   */
-  
-  for(int i; i < 100; i++){
-    //tft.drawCircle(120, 90, 100, curr_color);
-    //just playing around wioth stuff here
-    //need to clear a larger area for the main speed display and im a shit coder so its here
-    tft.fillRect(74,30,192,128,ILI9341_BLACK);
-    printSpeedDig(i, g5, 16, ILI9341_GREEN);
-    //tft.fillRect(74,128, 192, 128, ILI9341_BLACK);
+  for(int i; i < 99; i++){
+    printSpeedDig(i * 10, g5, 16, ILI9341_BLACK);
     printDig(i, g3, 2, 0x0000);
     printDig(i, g4, 2, 0x0000);
     delay(100);
@@ -124,12 +127,19 @@ void main_Display(){
 
 void debug_Dsiplay_Setup(){
   tft.fillScreen(ILI9341_ORANGE);
+  tft.drawLine(0,40,320,40, ILI9341_WHITE);
+  tft.drawLine(0,80,320,80, ILI9341_WHITE);
+  tft.drawLine(0,120,320,120, ILI9341_WHITE);
+  tft.drawLine(0,160,320,160, ILI9341_WHITE);
+  tft.drawLine(0,200,320,200, ILI9341_WHITE);
+  tft.drawLine(0,240,320,240, ILI9341_WHITE);
+  
   return;
 }
 
 void debug_Display(){
   Serial.println("this shit");
-  tft.drawLine(0,10,0,320, ILI9341_WHITE);
+  
   
 }
 
