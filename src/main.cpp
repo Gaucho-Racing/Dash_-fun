@@ -39,7 +39,7 @@ static std::pair<int, int> g4(130 , 220);
 static std::pair<int, int> g5(120 , 30);
 
 int curr_color = 0X0000;
-int curr_display = 0;
+int curr_display = 1;
 int last_n_digitds = 0;
 
 boolean debug_Display_hasRun = false;
@@ -124,21 +124,37 @@ void main_Display(){
     delay(100);
   }
 }
+//dial positions for the debug display 
+static std::pair<int, int> x;
+
 
 void debug_Dsiplay_Setup(){
-  tft.fillScreen(ILI9341_ORANGE);
-  tft.drawLine(0,40,320,40, ILI9341_WHITE);
-  tft.drawLine(0,80,320,80, ILI9341_WHITE);
-  tft.drawLine(0,120,320,120, ILI9341_WHITE);
-  tft.drawLine(0,160,320,160, ILI9341_WHITE);
-  tft.drawLine(0,200,320,200, ILI9341_WHITE);
-  tft.drawLine(0,240,320,240, ILI9341_WHITE);
-  
+  tft.setTextSize(2);
+  tft.fillScreen(ILI9341_BLACK);
+  tft.drawLine(0,40,200,40, ILI9341_WHITE);
+  tft.drawLine(0,80,200,80, ILI9341_WHITE);
+  tft.drawLine(0,120,200,120, ILI9341_WHITE);
+  tft.drawLine(0,160,200,160, ILI9341_WHITE);
+  tft.drawLine(0,200,200,200, ILI9341_WHITE);
+  tft.drawLine(0,240,200,240, ILI9341_WHITE);
+  tft.setCursor(5,10);
+  tft.println("Batt Temp:  ");
+  tft.setCursor(5,50);
+  tft.println("Motor Temp: ");
+  tft.setCursor(5,90);
+  tft.println("Volatge:    ");
+  tft.setCursor(5,130);
+  tft.println("Status:     ");
+  tft.setCursor(5,170);
+  tft.println("CAN Speed:  ");
+  tft.setCursor(5,210);
+  tft.println("Death:      ");
+
   return;
 }
 
 void debug_Display(){
-  Serial.println("this shit");
+  //Serial.println("this shit");
   
   
 }
