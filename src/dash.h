@@ -4,8 +4,9 @@
 #include <utility>
 using namespace std;
 class dash{
-    void printDig(int i, std::pair<int, int> );
-
+    public:
+        void printDig(int i, std::pair<int, int> x);
+        unsigned getNumDigits(unsigned i ); 
 };
 
 
