@@ -2,6 +2,7 @@
 #include <utility>
 #include <I_no_can_speak_flex.h>
 #include <cmath>
+#include <tuple>
 //basically just defining the pins that are used on the teensy
 #define CS_PIN  8
 #define TIRQ_PIN  2
@@ -13,19 +14,6 @@
 #define TFT_MISO    12
 ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCLK, TFT_MISO);
 
-//no clue what this is for 
-#define UP_BUTTON 3
-#define DOWN_BUTTON 4
-#define LEFT_BUTTON 5
-#define RIGHT_BUTTON 6
-
-/*
- * 0 - None
- * 1 - Up
- * 2 - Down
- * 3 - Left / Back
- * 4 - Right / Forward
- */
 
 //top right
 static std::pair<int, int> g1(15 , 30);
@@ -38,31 +26,44 @@ static std::pair<int, int> g4(130 , 220);
 //middle
 static std::pair<int, int> g5(120 , 30);
 
-int curr_color = 0X0000;
-int curr_display = 1;
-int last_n_digitds = 0;
 
+//display config
+int curr_display = 1;
+int max_display = 1;
+
+//for the main speed 
+int last_n_digitds;
+int last_n_digits_small;
+
+//button vars to cheeck when the button is pressed
+int buttonstate; 
+int val;
+
+//booleans for the different displays 
 boolean debug_Display_hasRun = false;
 boolean main_Display_hasRun = false;
 
 
 //can line
-
 I_no_can_speak_flex CAN(true);
 
-//random ass func to chractarize static things
-//basically this code is what draws the squares around the numbers and shii 
+
+//tft skeleton (what runs on statrup)
+//setup function for specifically the tft display 
 void setupSkeleton() {
+  tft.begin();
+  tft.setRotation(3);
   tft.fillScreen(ILI9341_BLACK);
 }
 
+
+//setup func
 void setup() {
-  tft.begin();
-  tft.setRotation(3);
-  tft.fillScreen(curr_color);
-  setupSkeleton();
-  CAN.begin();
   Serial.begin(9600);
+  pinMode(7, INPUT);
+  buttonstate = digitalRead(7);
+  CAN.begin();
+  setupSkeleton();
 }
 
 //used to get the number of digits that need to be displayed 
@@ -71,22 +72,15 @@ unsigned GetNumberOfDigits (unsigned i)
     return i > 0 ? (int) log10 ((double) i) + 1 : 1;
 }
 
-
-
-
-/*
-An example function to update the specific guage with params: i, x
-param i: number to update to
-param x: lcoation of the guage stored in an std::pair
-*/
+//shows the digits with a set precision of five leading zeros 
 void printDig(int i, std::pair<int, int> x, int t_size, int color){
-  unsigned n_digits = GetNumberOfDigits(i);
-  tft.fillRect(x.first,x.second, (n_digits + 1) * 6 * t_size, 8 * t_size , color);
-  tft.setCursor(x.first,x.second);
+  int n_digits = GetNumberOfDigits(i);
+  tft.setCursor(x.first, x.second);
   tft.setTextSize(t_size);
-  tft.println(i);
+  tft.printf("%05d", i);
 }
 
+//function used for printing and aligning the main speed dial on the main display
 void printSpeedDig(int i, std::pair<int, int> x, int t_size, int color){
   int n_digits = GetNumberOfDigits(i);
   if(last_n_digitds < n_digits){
@@ -102,6 +96,8 @@ void printSpeedDig(int i, std::pair<int, int> x, int t_size, int color){
   tft.println(i);
 }
 
+
+//main display
 void main_Display_Setup(){
   tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
   tft.fillScreen(ILI9341_BLACK);
@@ -111,24 +107,24 @@ void main_Display_Setup(){
   tft.setCursor(5, 220);
   tft.println("Tire Temp: ");
 }
-
 void main_Display(){
   /*
-  CAN.readData();
+  CAN.<node name>.get<>;
   replace all the i stuff with the can vars/funcs needed.
   */
-  for(int i; i < 99; i++){
-    printSpeedDig(i * 10, g5, 16, ILI9341_BLACK);
-    printDig(i, g3, 2, 0x0000);
-    printDig(i, g4, 2, 0x0000);
-    delay(100);
-  }
+  int i = rand() % 100;
+  printSpeedDig(i * 10, g5, 16, ILI9341_BLACK);
+  printDig(i, g3, 2, 0x0000);
+  printDig(i, g4, 2, 0x0000);
+  //might require a delay so im keeping it
+  delay(100);
 }
-//dial positions for the debug display 
-static std::pair<int, int> x;
 
 
+//secondary display
 void debug_Dsiplay_Setup(){
+  //this is legit a setup that only runs once so that there is no flicker when it is contantly being reset 
+  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
   tft.setTextSize(2);
   tft.fillScreen(ILI9341_BLACK);
   tft.drawLine(0,40,200,40, ILI9341_WHITE);
@@ -155,12 +151,37 @@ void debug_Dsiplay_Setup(){
 
 void debug_Display(){
   //Serial.println("this shit");
+  //tft.setCursor(160, 10);
+  printDig(CAN.sensors.getFFspeed(), std::pair<int, int> (160,10), 2, ILI9341_BLACK);
+  
   
   
 }
 
 void loop() {
-  CAN.readData();
+  
+  //button press
+
+  val = digitalRead(7);
+  if(val != buttonstate){
+    if(val == LOW){
+      if(curr_display == max_display){
+        curr_display = 0;
+      }else{
+        curr_display ++;
+      }
+      //requires a delay so that the counter does not go batshit crazy
+      delay(250);
+    }
+    Serial.println(buttonstate);
+    Serial.println(val);
+    Serial.println(max_display);
+  }
+  buttonstate = val;
+  
+
+  CAN.readData();//I dont think I need this atm.
+  //checks what display you are on and runs specifically that display 
   switch(curr_display){
     case(0):
       if(main_Display_hasRun == false){
@@ -182,8 +203,4 @@ void loop() {
     case(2):
       return;
   }
-
-
-    //next part is to get a button or smthn so I can somehow go throuhg the different pannels
-    //will use a switch statement for that and jsut shove that in the loop :)
 }
