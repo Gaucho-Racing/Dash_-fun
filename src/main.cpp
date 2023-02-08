@@ -27,6 +27,9 @@ static std::pair<int, int> g4(130 , 220);
 //middle
 static std::pair<int, int> g5(120 , 30);
 
+//pot pin
+static int pot_pin = A0;
+static int pot_max = 1000;
 
 //display config
 int curr_display = 2;
@@ -207,6 +210,16 @@ void loop() {
     Serial.println(max_display);
   }
   buttonstate = val;
+  //filler cod for when I get pot
+  int pot_val = analogRead(pot_pin);
+  if(pot_max/3 > pot_val > 0 ){
+    curr_display = 0;
+  }else if(pot_max/3 * 2 > pot_val > pot_max/3){
+    curr_display = 1;
+  }else{
+    curr_display = 2;
+  }
+
   
 
   CAN.readData();//I dont think I need this atm.
