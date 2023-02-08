@@ -75,7 +75,7 @@ unsigned GetNumberOfDigits (unsigned i)
 }
 
 //shows the digits with a set precision of five leading zeros 
-void printDig(int i, std::pair<int, int> x, int t_size, int color){
+void printDig(int i, std::pair<int, int> x, int t_size){
   int n_digits = GetNumberOfDigits(i);
   tft.setCursor(x.first, x.second);
   tft.setTextSize(t_size);
@@ -83,7 +83,7 @@ void printDig(int i, std::pair<int, int> x, int t_size, int color){
 }
 
 //function used for printing and aligning the main speed dial on the main display
-void printSpeedDig(int i, std::pair<int, int> x, int t_size, int color){
+void printSpeedDig(int i, std::pair<int, int> x, int t_size){
   int n_digits = GetNumberOfDigits(i);
   if(last_n_digitds < n_digits){
     last_n_digitds = n_digits;
@@ -115,9 +115,9 @@ void main_Display(){
   replace all the i stuff with the can vars/funcs needed.
   */
   int i = rand() % 100;
-  printSpeedDig(i * 10, g5, 16, ILI9341_BLACK);
-  printDig(i, g3, 2, 0x0000);
-  printDig(i, g4, 2, 0x0000);
+  printSpeedDig(i * 10, g5, 16);
+  printDig(i, g3, 2);
+  printDig(i, g4, 2);
   //might require a delay so im keeping it
   delay(100);
 }
@@ -171,16 +171,16 @@ void display_2_setup(){
   tft.print("A");
 }
 void display_2(){
-  printDig(CAN.DTI.getMotorTemp(), std::pair<int, int> (40,30), 2, ILI9341_BLACK);
-  printDig(CAN.DTI.getVoltIn(), std::pair<int, int> (40, 60), 2, ILI9341_BLACK);
-  printDig(CAN.DTI.getACCurrent(), std::pair<int, int> (40,90), 2, ILI9341_BLACK);
+  printDig(CAN.DTI.getMotorTemp(), std::pair<int, int> (40,30), 2);
+  printDig(CAN.DTI.getVoltIn(), std::pair<int, int> (40, 60), 2);
+  printDig(CAN.DTI.getACCurrent(), std::pair<int, int> (40,90), 2);
 }
 
 void debug_Display(){
   CAN.readData();
   //Serial.println("this shit");
   //tft.setCursor(160, 10);
-  printDig(CAN.DTI.getThrottleIn(), std::pair<int, int> (160,10), 2, ILI9341_BLACK);
+  printDig(CAN.DTI.getThrottleIn(), std::pair<int, int> (160,10), 2);
   //Serial.println(CAN.readData());
   
   
