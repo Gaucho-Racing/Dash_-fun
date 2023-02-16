@@ -2,7 +2,8 @@
 #include <utility>
 #include <I_no_can_speak_flex.h>
 #include <cmath>
-#include <tuple>
+#include <string>
+using namespace std;
 //basically just defining the pins that are used on the teensy
 #define CS_PIN  8
 #define TIRQ_PIN  2
@@ -26,10 +27,13 @@ static std::pair<int, int> g4(130 , 220);
 //middle
 static std::pair<int, int> g5(120 , 30);
 
+//pot pin
+static int pot_pin = A0;
+static int pot_max = 1000;
 
 //display config
-int curr_display = 1;
-int max_display = 1;
+int curr_display = 2;
+int max_display = 2;
 
 //for the main speed 
 int last_n_digitds;
@@ -42,6 +46,7 @@ int val;
 //booleans for the different displays 
 boolean debug_Display_hasRun = false;
 boolean main_Display_hasRun = false;
+boolean display_2_hasRun = false;
 
 
 //can line
@@ -73,15 +78,15 @@ unsigned GetNumberOfDigits (unsigned i)
 }
 
 //shows the digits with a set precision of five leading zeros 
-void printDig(int i, std::pair<int, int> x, int t_size, int color){
+void printDig(int i, std::pair<int, int> x, int t_size){
   int n_digits = GetNumberOfDigits(i);
   tft.setCursor(x.first, x.second);
   tft.setTextSize(t_size);
-  tft.printf("%05d", i);
+  tft.printf("%03d", i);
 }
 
 //function used for printing and aligning the main speed dial on the main display
-void printSpeedDig(int i, std::pair<int, int> x, int t_size, int color){
+void printSpeedDig(int i, std::pair<int, int> x, int t_size){
   int n_digits = GetNumberOfDigits(i);
   if(last_n_digitds < n_digits){
     last_n_digitds = n_digits;
@@ -113,9 +118,9 @@ void main_Display(){
   replace all the i stuff with the can vars/funcs needed.
   */
   int i = rand() % 100;
-  printSpeedDig(i * 10, g5, 16, ILI9341_BLACK);
-  printDig(i, g3, 2, 0x0000);
-  printDig(i, g4, 2, 0x0000);
+  printSpeedDig(i * 10, g5, 16);
+  printDig(i, g3, 2);
+  printDig(i, g4, 2);
   //might require a delay so im keeping it
   delay(100);
 }
@@ -149,10 +154,37 @@ void debug_Dsiplay_Setup(){
   return;
 }
 
+void display_2_setup(){
+  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+  tft.setTextSize(2);
+  tft.fillScreen(ILI9341_BLACK);
+  tft.drawLine(40,0, 40, 240, ILI9341_WHITE);
+  tft.drawLine(0,25, 320, 25, ILI9341_WHITE);
+  tft.setCursor(45, 0);
+  tft.print("mtr");
+  tft.setCursor(90, 0);
+  tft.print("invrt");
+  tft.setCursor(165, 0);
+  tft.print("bat");
+  tft.setCursor(0, 30);
+  tft.print("C" + char(247));
+  tft.setCursor(0, 60);
+  tft.print("V");
+  tft.setCursor(0, 90);
+  tft.print("A");
+}
+void display_2(){
+  printDig(CAN.DTI.getMotorTemp(), std::pair<int, int> (40,30), 2);
+  printDig(CAN.DTI.getVoltIn(), std::pair<int, int> (40, 60), 2);
+  printDig(CAN.DTI.getACCurrent(), std::pair<int, int> (40,90), 2);
+}
+
 void debug_Display(){
+  CAN.readData();
   //Serial.println("this shit");
   //tft.setCursor(160, 10);
-  printDig(CAN.sensors.getFFspeed(), std::pair<int, int> (160,10), 2, ILI9341_BLACK);
+  printDig(CAN.DTI.getThrottleIn(), std::pair<int, int> (160,10), 2);
+  //Serial.println(CAN.readData());
   
   
   
@@ -178,6 +210,16 @@ void loop() {
     Serial.println(max_display);
   }
   buttonstate = val;
+  //filler cod for when I get pot
+  int pot_val = analogRead(pot_pin);
+  if(pot_max/3 > pot_val > 0 ){
+    curr_display = 0;
+  }else if(pot_max/3 * 2 > pot_val > pot_max/3){
+    curr_display = 1;
+  }else{
+    curr_display = 2;
+  }
+
   
 
   CAN.readData();//I dont think I need this atm.
@@ -188,19 +230,26 @@ void loop() {
         main_Display_Setup();
         main_Display_hasRun = true;
         debug_Display_hasRun = false;
+        display_2_hasRun = false;
       }
       main_Display();
       return;
     case(1):
       if(debug_Display_hasRun == false){
-        main_Display_Setup();
+        //main_Display_Setup();
         debug_Dsiplay_Setup();
         debug_Display_hasRun = true;
         main_Display_hasRun = false;
+        display_2_hasRun = false;
       }
       debug_Display();
       return;
     case(2):
-      return;
+      if(display_2_hasRun == false){
+        display_2_setup();
+        debug_Display_hasRun = false;
+        main_Display_hasRun = false;
+        display_2_hasRun = true;
+      }
   }
 }
