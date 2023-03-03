@@ -25,15 +25,16 @@ static std::pair<int, int> g3(130 , 200);
 //bottom left
 static std::pair<int, int> g4(130 , 220);
 //middle
-static std::pair<int, int> g5(120 , 30);
+static std::pair<int, int> g5(100 , 20);
 
 //pot pin
 static int pot_pin = A0;
 static int pot_max = 1000;
 
 //display config
-int curr_display = 2;
+int curr_display = 0;
 int max_display = 2;
+int max_speed = 150;
 
 //for the main speed 
 int last_n_digitds;
@@ -52,6 +53,20 @@ boolean display_2_hasRun = false;
 //can line
 I_no_can_speak_flex CAN(true);
 
+//8 gradient for some cool styling
+int colors[11] = {
+  0xF800,
+  0xF800,
+  0xD8E0,
+  0xB9E0,
+  0x9AE0,
+  0x7BE0,
+  0x7BE0,
+  0x5CE0,
+  0x3DE0,
+  0x1EE0,
+  0x07E0,
+};
 
 //tft skeleton (what runs on statrup)
 //setup function for specifically the tft display 
@@ -87,6 +102,7 @@ void printDig(int i, std::pair<int, int> x, int t_size){
 
 //function used for printing and aligning the main speed dial on the main display
 void printSpeedDig(int i, std::pair<int, int> x, int t_size){
+  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
   int n_digits = GetNumberOfDigits(i);
   if(last_n_digitds < n_digits){
     last_n_digitds = n_digits;
@@ -95,34 +111,45 @@ void printSpeedDig(int i, std::pair<int, int> x, int t_size){
     tft.fillRect(0,0,320,144,ILI9341_BLACK);
     last_n_digitds = n_digits;
   }
-  int z = 170 - ((n_digits) * 6 * t_size)/2;
+  int z = 160 - ((n_digits) * 6 * t_size)/2;
   tft.setCursor(z,x.second);
   tft.setTextSize(t_size);
   tft.println(i);
 }
 
+void draw_Batt(int i){
+  tft.fillRect(15,195, i, 45,  colors[i/10]);
+  tft.fillRect(15 + i,195, 102-i, 45, ILI9341_BLACK);
+}
 
 //main display
 void main_Display_Setup(){
   tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
   tft.fillScreen(ILI9341_BLACK);
-  tft.setCursor(5,200);
+  tft.setCursor(15,180);
   tft.setTextSize(2);
-  tft.println("Batt Temp: ");
-  tft.setCursor(5, 220);
-  tft.println("Tire Temp: ");
+  tft.println("Battery");
 }
 void main_Display(){
   /*
   CAN.<node name>.get<>;
   replace all the i stuff with the can vars/funcs needed.
   */
-  int i = rand() % 100;
-  printSpeedDig(i * 10, g5, 16);
+  
+  for(int i = 0; i < 200; i++){
+  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+  printSpeedDig(i, g5, 16);
   printDig(i, g3, 2);
-  printDig(i, g4, 2);
+  if(i < 100){
+    draw_Batt(i);
+  }else{
+    draw_Batt(200 - i );
+  }
+  
+  delay(10);
+  };
   //might require a delay so im keeping it
-  delay(100);
+  
 }
 
 
@@ -211,6 +238,7 @@ void loop() {
   }
   buttonstate = val;
   //filler cod for when I get pot
+  /*
   int pot_val = analogRead(pot_pin);
   if(pot_max/3 > pot_val > 0 ){
     curr_display = 0;
@@ -219,6 +247,7 @@ void loop() {
   }else{
     curr_display = 2;
   }
+  */
 
   
 
