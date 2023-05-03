@@ -4,6 +4,10 @@
 #include <cmath>
 #include <string>
 #include <Encoder.h>
+#include <MPU6050.h>
+#include <I2Cdev.h>
+#include <Wire.h>
+#include <math.h>
 using namespace std;
 //basically just defining the pins that are used on the teensy
 #define CS_PIN  8
@@ -16,8 +20,13 @@ using namespace std;
 #define TFT_MISO    12
 ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCLK, TFT_MISO);
 
+//encoder and mpu
 Encoder enc(20,21);
+MPU6050 mpu;
 
+//mpu vars
+int16_t ax, ay, az;
+int16_t gx, gy, gz;
 //top right
 static std::pair<int, int> g1(15 , 30);
 //top left
@@ -90,6 +99,11 @@ void setup() {
   //buttonstate = digitalRead(17);
   CAN.begin();
   setupSkeleton();
+  Wire.begin();
+  mpu.initialize();
+  mpu.setI2CBypassEnabled(true);
+  Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+  mpu.setFullScaleAccelRange(0);
 }
 
 //used to get the number of digits that need to be displayed 
@@ -188,6 +202,7 @@ void debug_Dsiplay_Setup(){
 }
 
 void display_2_setup(){
+  /*
   tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
   tft.setTextSize(2);
   tft.fillScreen(ILI9341_BLACK);
@@ -205,11 +220,23 @@ void display_2_setup(){
   tft.print("V");
   tft.setCursor(0, 90);
   tft.print("A");
+  */
+  tft.fillScreen(ILI9341_BLACK);
 }
 void display_2(){
+  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  double z = atan2(ay/16384.0, ax/16384.0);
+  Serial.print(10*cos(z));
+  Serial.print("   ");
+  Serial.println(10*sin(z));
+
+  tft.drawLine(140, 120, 140 - int(100*cos(z)), 120 -int(100*sin(z)), ILI9341_WHITE);
+  tft.fillScreen(ILI9341_BLACK);
+  /*
   printDig(CAN.DTI.getMotorTemp(), std::pair<int, int> (40,30), 2);
   printDig(CAN.DTI.getVoltIn(), std::pair<int, int> (40, 60), 2);
   printDig(CAN.DTI.getACCurrent(), std::pair<int, int> (40,90), 2);
+  */
 }
 
 void debug_Display(){
@@ -218,28 +245,33 @@ void debug_Display(){
   //tft.setCursor(160, 10);
   printDig(CAN.DTI.getThrottleIn(), std::pair<int, int> (160,10), 2);
   //Serial.println(CAN.readData());
-  
-  
-  
+}
+
+void cool_arrow_display(){
+
 }
 
 void loop() {
+ 
+  //Serial.println(atan2(ay/16384.0, ax/16384.0));
+
   //you can only change the state of the display iff you are pressing the button on the rotary encoder 
   if(!digitalRead(17)){
   current = enc.read();
   if(current != prior){
     prior = current;
+    //Serial.println("changed state");
     if(current % 4 == 0){
       if(priorer > current){
         curr_display ++;
-        if(curr_display > 2){
+        if(curr_display > max_display){
           curr_display = 0;
         }
       }
       else{
         curr_display --;
         if(curr_display < 0){
-          curr_display = 2;
+          curr_display = max_display;
         }
       }
       priorer = current;
@@ -278,5 +310,6 @@ void loop() {
         main_Display_hasRun = false;
         display_2_hasRun = true;
       }
+      display_2();
   }
 }
